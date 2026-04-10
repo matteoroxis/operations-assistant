@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: operations-assistant
+
+  data:
+    mongodb:
+      # Set MONGODB_URI env var to your Atlas connection string
+      # e.g. mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+      uri: ${MONGODB_URI:mongodb://localhost:27017/ops_assistant}
+      database: ${MONGODB_DATABASE:ops_assistant}
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o
+          temperature: 0.2
+      embedding:
+        options:
+          model: text-embedding-3-small
+          dimensions: 1536
+
+    vectorstore:
+      mongodb:
+        # Collection name used to store knowledge chunks
+        collection-name: knowledge_chunks
+        # Name of the Atlas Vector Search index — must match what you create in Atlas UI
+        index-name: knowledge_vector_index
+        # Field path that stores the embedding vector
+        path-name: embedding
+        # Set to true only if your Atlas cluster supports programmatic index creation
+        # (Atlas M10+ via createSearchIndex command). For M0 free tier, create the
+        # index manually in Atlas UI → Collections → Search Indexes.
+        initialize-schema: false
+        # Metadata fields that can be used in filter expressions
+        metadata-fields-to-filter:
+          - sourceType
+          - system
+          - environment
+          - severity
+          - team
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.example.opsassistant: DEBUG
+    org.springframework.ai: INFO
+    org.springframework.data.mongodb: WARN

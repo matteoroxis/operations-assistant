@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Operations Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous"/>
+    <style>
+        body { background-color: #f8f9fa; }
+        .navbar-brand { font-weight: 700; letter-spacing: .5px; }
+        #chat-box {
+            height: 420px;
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: .5rem;
+            padding: 1rem;
+        }
+        .msg-user { text-align: right; }
+        .msg-user .bubble {
+            display: inline-block;
+            background: #0d6efd;
+            color: #fff;
+            border-radius: 1rem 1rem 0 1rem;
+            padding: .5rem 1rem;
+            max-width: 80%;
+        }
+        .msg-assistant .bubble {
+            display: inline-block;
+            background: #e9ecef;
+            color: #212529;
+            border-radius: 1rem 1rem 1rem 0;
+            padding: .5rem 1rem;
+            max-width: 80%;
+            white-space: pre-wrap;
+        }
+        .spinner-border { width: 1.2rem; height: 1.2rem; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">⚙ Operations Assistant</a>
+        <span class="navbar-text text-secondary small">Spring AI · MongoDB Atlas · Article 1 — RAG Foundation</span>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row g-4">
+
+        <!-- ── LEFT: Knowledge Ingestion ──────────────────────────────── -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold">📥 Knowledge Ingestion</div>
+                <div class="card-body">
+
+                    <!-- Sample loader -->
+                    <div class="mb-4">
+                        <p class="text-muted small mb-2">
+                            Load the bundled sample runbooks to get started quickly.
+                        </p>
+                        <button id="btn-samples" class="btn btn-outline-success btn-sm w-100">
+                            Load Sample Runbooks
+                        </button>
+                        <div id="sample-result" class="mt-2 small text-success d-none"></div>
+                    </div>
+
+                    <hr/>
+
+                    <!-- Manual ingestion form -->
+                    <form id="ingest-form">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Content <span class="text-danger">*</span></label>
+                            <textarea id="ingest-content" class="form-control" rows="6"
+                                      placeholder="Paste runbook, SOP, FAQ or alert note here…" required></textarea>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small">Source type <span class="text-danger">*</span></label>
+                                <select id="ingest-type" class="form-select form-select-sm" required>
+                                    <option value="">— select —</option>
+                                    <option value="runbook">Runbook</option>
+                                    <option value="SOP">SOP</option>
+                                    <option value="FAQ">FAQ</option>
+                                    <option value="postmortem">Postmortem</option>
+                                    <option value="alert-note">Alert note</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">System</label>
+                                <input id="ingest-system" type="text" class="form-control form-control-sm"
+                                       placeholder="e.g. payment-service"/>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-4">
+                                <label class="form-label small">Environment</label>
+                                <select id="ingest-env" class="form-select form-select-sm">
+                                    <option value="">all</option>
+                                    <option value="prod">prod</option>
+                                    <option value="staging">staging</option>
+                                    <option value="dev">dev</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small">Severity</label>
+                                <select id="ingest-severity" class="form-select form-select-sm">
+                                    <option value="">—</option>
+                                    <option value="critical">critical</option>
+                                    <option value="high">high</option>
+                                    <option value="medium">medium</option>
+                                    <option value="low">low</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small">Team</label>
+                                <input id="ingest-team" type="text" class="form-control form-control-sm"
+                                       placeholder="operations"/>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            Ingest Document
+                        </button>
+                        <div id="ingest-result" class="mt-2 small d-none"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── RIGHT: Chat ────────────────────────────────────────────── -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold">💬 Ask the Operations Assistant</div>
+                <div class="card-body d-flex flex-column">
+
+                    <!-- Optional filters -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Filter by system</label>
+                            <input id="chat-system" type="text" class="form-control form-control-sm"
+                                   placeholder="e.g. payment-service"/>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Filter by environment</label>
+                            <select id="chat-env" class="form-select form-select-sm">
+                                <option value="">all</option>
+                                <option value="prod">prod</option>
+                                <option value="staging">staging</option>
+                                <option value="dev">dev</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Chat box -->
+                    <div id="chat-box" class="flex-grow-1 mb-3"></div>
+
+                    <!-- Input row -->
+                    <div class="input-group">
+                        <textarea id="chat-input" class="form-control" rows="2"
+                                  placeholder="Describe the alert or ask an operational question…"></textarea>
+                        <button id="btn-send" class="btn btn-primary px-4">Send</button>
+                    </div>
+                    <div id="chat-spinner" class="text-center mt-2 d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Thinking…</span>
+                        </div>
+                        <span class="ms-2 text-muted small">Retrieving context and generating answer…</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /row -->
+</div><!-- /container -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+<script>
+    // ── Ingestion — sample runbooks ──────────────────────────────────────────
+    document.getElementById('btn-samples').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-samples');
+        const result = document.getElementById('sample-result');
+        btn.disabled = true;
+        btn.textContent = 'Loading…';
+        result.classList.add('d-none');
+        try {
+            const res = await fetch('/api/ops/knowledge/ingest/samples', { method: 'POST' });
+            const data = await res.json();
+            result.textContent = `✓ ${data.chunks} chunks stored (${data.status})`;
+            result.classList.remove('d-none', 'text-danger');
+            result.classList.add('text-success');
+        } catch (e) {
+            result.textContent = '✗ Error: ' + e.message;
+            result.classList.remove('d-none', 'text-success');
+            result.classList.add('text-danger');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Load Sample Runbooks';
+        }
+    });
+
+    // ── Ingestion — manual form ──────────────────────────────────────────────
+    document.getElementById('ingest-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resultEl = document.getElementById('ingest-result');
+        const payload = {
+            content:     document.getElementById('ingest-content').value.trim(),
+            sourceType:  document.getElementById('ingest-type').value,
+            system:      document.getElementById('ingest-system').value.trim() || null,
+            environment: document.getElementById('ingest-env').value || null,
+            severity:    document.getElementById('ingest-severity').value || null,
+            team:        document.getElementById('ingest-team').value.trim() || null,
+            tags:        null
+        };
+        resultEl.classList.add('d-none');
+        try {
+            const res = await fetch('/api/ops/knowledge/ingest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            resultEl.textContent = res.ok
+                ? `✓ Stored ${data.chunks} chunk(s)`
+                : `✗ ${JSON.stringify(data)}`;
+            resultEl.className = 'mt-2 small ' + (res.ok ? 'text-success' : 'text-danger');
+            resultEl.classList.remove('d-none');
+        } catch (err) {
+            resultEl.textContent = '✗ Network error: ' + err.message;
+            resultEl.className = 'mt-2 small text-danger';
+            resultEl.classList.remove('d-none');
+        }
+    });
+
+    // ── Chat ─────────────────────────────────────────────────────────────────
+    const chatBox = document.getElementById('chat-box');
+    const chatInput = document.getElementById('chat-input');
+    const spinner = document.getElementById('chat-spinner');
+
+    function appendMessage(role, text) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'mb-3 ' + (role === 'user' ? 'msg-user' : 'msg-assistant');
+        const bubble = document.createElement('span');
+        bubble.className = 'bubble';
+        bubble.textContent = text;
+        wrapper.appendChild(bubble);
+        chatBox.appendChild(wrapper);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+        appendMessage('user', message);
+        chatInput.value = '';
+        spinner.classList.remove('d-none');
+        document.getElementById('btn-send').disabled = true;
+
+        const payload = {
+            message,
+            system:      document.getElementById('chat-system').value.trim() || null,
+            environment: document.getElementById('chat-env').value || null
+        };
+
+        try {
+            const res = await fetch('/api/ops/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            appendMessage('assistant', res.ok ? data.answer : '⚠ ' + JSON.stringify(data));
+        } catch (err) {
+            appendMessage('assistant', '⚠ Network error: ' + err.message);
+        } finally {
+            spinner.classList.add('d-none');
+            document.getElementById('btn-send').disabled = false;
+        }
+    }
+
+    document.getElementById('btn-send').addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+</script>
+</body>
+</html>
