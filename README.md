@@ -70,15 +70,15 @@ Operations Assistant Orchestrator
 
 ## Tech stack
 
-| Component | Technology |
-|-----------|-----------|
-| Runtime | Java 21 + Spring Boot 3.4 |
-| AI orchestration | Spring AI 1.0.0 |
-| Chat model | OpenAI GPT-4o |
+| Component | Technology                                |
+|-----------|-------------------------------------------|
+| Runtime | Java 21 + Spring Boot 3.4                 |
+| AI orchestration | Spring AI 1.0.0                           |
+| Chat model | OpenAI GPT-5.4-mini                      |
 | Embedding model | OpenAI text-embedding-3-small (1536 dims) |
-| Vector + document store | MongoDB Atlas (M0 free tier) |
-| Short-term memory | Spring AI `InMemoryChatMemoryRepository` |
-| UI | Thymeleaf + Bootstrap 5 |
+| Vector + document store | MongoDB Atlas (M0 free tier)              |
+| Short-term memory | Spring AI `InMemoryChatMemoryRepository`  |
+| UI | Thymeleaf + Bootstrap 5                   |
 
 ---
 
@@ -156,7 +156,7 @@ On Atlas M10+ you can set `spring.data.mongodb.auto-index-creation=true` and Spr
 
 ```bash
 # MongoDB Atlas connection string
-export MONGODB_URI="mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority"
+export MONGODB_URI="mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?appName=devrel-github-java-agentic-workflows-foojay"
 
 # OpenAI API key
 export OPENAI_API_KEY="sk-..."
@@ -417,7 +417,7 @@ All properties can be overridden via environment variables or `application.yml`.
 | `spring.data.mongodb.uri` | `MONGODB_URI` | `mongodb://localhost:27017` | Atlas connection string |
 | `spring.data.mongodb.database` | `MONGODB_DATABASE` | `ops_assistant` | Database name |
 | `spring.ai.openai.api-key` | `OPENAI_API_KEY` | — | OpenAI API key |
-| `spring.ai.openai.chat.options.model` | — | `gpt-4o` | Chat model |
+| `spring.ai.openai.chat.options.model` | — | `gpt-5.4-mini` | Chat model |
 | `spring.ai.openai.embedding.options.model` | — | `text-embedding-3-small` | Embedding model |
 | `spring.ai.vectorstore.mongodb.collection-name` | — | `knowledge_chunks` | Knowledge embeddings collection |
 | `spring.ai.vectorstore.mongodb.index-name` | — | `knowledge_vector_index` | Atlas Search index for knowledge |

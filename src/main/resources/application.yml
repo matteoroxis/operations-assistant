@@ -6,7 +6,7 @@ spring:
     mongodb:
       # Set MONGODB_URI env var to your Atlas connection string
       # e.g. mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
-      uri: ${MONGODB_URI:mongodb://localhost:27017/ops_assistant}
+      uri: ${MONGODB_URI:mongodb://localhost:27017/ops_assistant?appName=devrel-github-java-agentic-workflows-foojay}
       database: ${MONGODB_DATABASE:ops_assistant}
       # Automatically create @Indexed indexes.
       # Requires Atlas M10+ for programmatic TTL index creation on checkpoints.expiresAt.
@@ -19,7 +19,7 @@ spring:
       api-key: ${OPENAI_API_KEY}
       chat:
         options:
-          model: gpt-4o
+          model: gpt-5.4-mini
           temperature: 0.2
       embedding:
         options:
