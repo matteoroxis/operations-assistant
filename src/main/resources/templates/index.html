@@ -12,7 +12,7 @@
         body { background-color: #f8f9fa; }
         .navbar-brand { font-weight: 700; letter-spacing: .5px; }
         #chat-box {
-            height: 420px;
+            height: 360px;
             overflow-y: auto;
             background: #ffffff;
             border: 1px solid #dee2e6;
@@ -38,32 +38,64 @@
             white-space: pre-wrap;
         }
         .spinner-border { width: 1.2rem; height: 1.2rem; }
+        #memories-list .memory-item {
+            font-size: .82rem;
+            border-left: 3px solid #0d6efd;
+            padding: .3rem .6rem;
+            margin-bottom: .4rem;
+            background: #f0f4ff;
+            border-radius: 0 .25rem .25rem 0;
+        }
+        .conv-id-badge {
+            font-size: .7rem;
+            font-family: monospace;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        #workflow-state .state-row {
+            font-size: .82rem;
+            padding: .2rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        #workflow-state .state-label {
+            font-weight: 600;
+            color: #6c757d;
+            min-width: 90px;
+            display: inline-block;
+        }
+        .status-badge-RUNNING          { background: #198754 !important; }
+        .status-badge-WAITING_APPROVAL { background: #fd7e14 !important; }
+        .status-badge-WAITING_INPUT    { background: #0dcaf0 !important; color: #000 !important; }
+        .status-badge-COMPLETED        { background: #0d6efd !important; }
+        .status-badge-FAILED           { background: #dc3545 !important; }
     </style>
 </head>
 <body>
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container">
+    <div class="container-fluid px-4">
         <a class="navbar-brand" href="/">⚙ Operations Assistant</a>
-        <span class="navbar-text text-secondary small">Spring AI · MongoDB Atlas · Article 1 — RAG Foundation</span>
+        <span class="navbar-text text-secondary small">Spring AI · MongoDB Atlas · Article 3 — Stateful Agent: Checkpoint + Pause/Resume</span>
     </div>
 </nav>
 
-<div class="container">
-    <div class="row g-4">
+<div class="container-fluid px-4">
+    <div class="row g-3">
 
-        <!-- ── LEFT: Knowledge Ingestion ──────────────────────────────── -->
-        <div class="col-lg-5">
+        <!-- ── COL 1: Knowledge Ingestion ────────────────────────────── -->
+        <div class="col-lg-3">
             <div class="card shadow-sm h-100">
                 <div class="card-header fw-semibold">📥 Knowledge Ingestion</div>
                 <div class="card-body">
 
                     <!-- Sample loader -->
-                    <div class="mb-4">
-                        <p class="text-muted small mb-2">
-                            Load the bundled sample runbooks to get started quickly.
-                        </p>
+                    <div class="mb-3">
+                        <p class="text-muted small mb-2">Load bundled sample runbooks to get started.</p>
                         <button id="btn-samples" class="btn btn-outline-success btn-sm w-100">
                             Load Sample Runbooks
                         </button>
@@ -74,12 +106,12 @@
 
                     <!-- Manual ingestion form -->
                     <form id="ingest-form">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Content <span class="text-danger">*</span></label>
-                            <textarea id="ingest-content" class="form-control" rows="6"
-                                      placeholder="Paste runbook, SOP, FAQ or alert note here…" required></textarea>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Content <span class="text-danger">*</span></label>
+                            <textarea id="ingest-content" class="form-control form-control-sm" rows="5"
+                                      placeholder="Paste runbook, SOP, FAQ or alert note…" required></textarea>
                         </div>
-                        <div class="row g-2 mb-3">
+                        <div class="row g-1 mb-2">
                             <div class="col-6">
                                 <label class="form-label small">Source type <span class="text-danger">*</span></label>
                                 <select id="ingest-type" class="form-select form-select-sm" required>
@@ -94,12 +126,12 @@
                             <div class="col-6">
                                 <label class="form-label small">System</label>
                                 <input id="ingest-system" type="text" class="form-control form-control-sm"
-                                       placeholder="e.g. payment-service"/>
+                                       placeholder="payment-service"/>
                             </div>
                         </div>
-                        <div class="row g-2 mb-3">
+                        <div class="row g-1 mb-2">
                             <div class="col-4">
-                                <label class="form-label small">Environment</label>
+                                <label class="form-label small">Env</label>
                                 <select id="ingest-env" class="form-select form-select-sm">
                                     <option value="">all</option>
                                     <option value="prod">prod</option>
@@ -120,33 +152,41 @@
                             <div class="col-4">
                                 <label class="form-label small">Team</label>
                                 <input id="ingest-team" type="text" class="form-control form-control-sm"
-                                       placeholder="operations"/>
+                                       placeholder="ops"/>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-sm w-100">
-                            Ingest Document
-                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Ingest Document</button>
                         <div id="ingest-result" class="mt-2 small d-none"></div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- ── RIGHT: Chat ────────────────────────────────────────────── -->
-        <div class="col-lg-7">
+        <!-- ── COL 2: Chat ────────────────────────────────────────────── -->
+        <div class="col-lg-5">
             <div class="card shadow-sm h-100">
-                <div class="card-header fw-semibold">💬 Ask the Operations Assistant</div>
+                <div class="card-header fw-semibold d-flex align-items-center justify-content-between">
+                    <span>💬 Ask the Operations Assistant</span>
+                    <span class="text-muted small">
+                        conv:&nbsp;<span id="conv-id-display" class="conv-id-badge badge bg-secondary">—</span>
+                    </span>
+                </div>
                 <div class="card-body d-flex flex-column">
 
-                    <!-- Optional filters -->
+                    <!-- Session config row -->
                     <div class="row g-2 mb-3">
-                        <div class="col-6">
+                        <div class="col-4">
+                            <label class="form-label small text-muted">User ID</label>
+                            <input id="chat-user-id" type="text" class="form-control form-control-sm"
+                                   placeholder="ops-user" value="ops-user"/>
+                        </div>
+                        <div class="col-4">
                             <label class="form-label small text-muted">Filter by system</label>
                             <input id="chat-system" type="text" class="form-control form-control-sm"
                                    placeholder="e.g. payment-service"/>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label small text-muted">Filter by environment</label>
+                        <div class="col-3">
+                            <label class="form-label small text-muted">Environment</label>
                             <select id="chat-env" class="form-select form-select-sm">
                                 <option value="">all</option>
                                 <option value="prod">prod</option>
@@ -154,23 +194,89 @@
                                 <option value="dev">dev</option>
                             </select>
                         </div>
+                        <div class="col-1 d-flex align-items-end">
+                            <button id="btn-new-session" class="btn btn-outline-secondary btn-sm w-100"
+                                    title="Start a new conversation session">↺</button>
+                        </div>
                     </div>
 
-                    <!-- Chat box -->
+                    <!-- Chat messages -->
                     <div id="chat-box" class="flex-grow-1 mb-3"></div>
 
                     <!-- Input row -->
-                    <div class="input-group">
+                    <div class="input-group mb-2">
                         <textarea id="chat-input" class="form-control" rows="2"
                                   placeholder="Describe the alert or ask an operational question…"></textarea>
                         <button id="btn-send" class="btn btn-primary px-4">Send</button>
                     </div>
-                    <div id="chat-spinner" class="text-center mt-2 d-none">
+                    <div id="chat-spinner" class="text-center mb-2 d-none">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Thinking…</span>
                         </div>
                         <span class="ms-2 text-muted small">Retrieving context and generating answer…</span>
                     </div>
+
+                    <!-- Consolidate button -->
+                    <div class="d-flex align-items-center gap-2">
+                        <button id="btn-consolidate" class="btn btn-outline-warning btn-sm">
+                            🧠 Consolidate to Long-term Memory
+                        </button>
+                        <div id="consolidate-result" class="small d-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── COL 3: Active Memories ─────────────────────────────────── -->
+        <div class="col-lg-2">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold">🧠 Long-term Memories</div>
+                <div class="card-body d-flex flex-column">
+                    <p class="text-muted small mb-2">
+                        Persistent facts, preferences, and decisions remembered across conversations.
+                    </p>
+                    <button id="btn-load-memories" class="btn btn-outline-primary btn-sm mb-3">
+                        Load Memories
+                    </button>
+                    <div id="memories-spinner" class="text-center d-none mb-2">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="ms-1 text-muted small">Loading…</span>
+                    </div>
+                    <div id="memories-list" class="flex-grow-1 overflow-auto">
+                        <p class="text-muted small fst-italic">No memories loaded yet.</p>
+                    </div>
+                    <div id="memories-count" class="text-muted small mt-2 d-none"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── COL 4: Workflow State ──────────────────────────────────── -->
+        <div class="col-lg-2">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold">⚙ Workflow State</div>
+                <div class="card-body d-flex flex-column">
+                    <p class="text-muted small mb-2">
+                        Checkpoint status for the active conversation.
+                    </p>
+                    <button id="btn-load-state" class="btn btn-outline-secondary btn-sm mb-3">
+                        Refresh State
+                    </button>
+                    <div id="workflow-spinner" class="text-center d-none mb-2">
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                        <span class="ms-1 text-muted small">Loading…</span>
+                    </div>
+                    <div id="workflow-state" class="flex-grow-1">
+                        <p class="text-muted small fst-italic">No checkpoint yet.</p>
+                    </div>
+                    <div class="mt-3 d-grid gap-2">
+                        <button id="btn-resume" class="btn btn-warning btn-sm d-none">
+                            ▶ Resume Task
+                        </button>
+                        <button id="btn-complete" class="btn btn-outline-success btn-sm d-none">
+                            ✓ Mark Completed
+                        </button>
+                    </div>
+                    <div id="workflow-action-result" class="small mt-2 d-none"></div>
                 </div>
             </div>
         </div>
@@ -182,6 +288,29 @@
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
 <script>
+    // ── Session state ────────────────────────────────────────────────────────
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+            const r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+    }
+
+    let currentConversationId = generateUUID();
+
+    function updateConvDisplay() {
+        document.getElementById('conv-id-display').textContent = currentConversationId;
+        document.getElementById('conv-id-display').title = currentConversationId;
+    }
+    updateConvDisplay();
+
+    document.getElementById('btn-new-session').addEventListener('click', () => {
+        currentConversationId = generateUUID();
+        updateConvDisplay();
+        document.getElementById('chat-box').innerHTML = '';
+        document.getElementById('consolidate-result').classList.add('d-none');
+    });
+
     // ── Ingestion — sample runbooks ──────────────────────────────────────────
     document.getElementById('btn-samples').addEventListener('click', async () => {
         const btn = document.getElementById('btn-samples');
@@ -257,6 +386,8 @@
     async function sendMessage() {
         const message = chatInput.value.trim();
         if (!message) return;
+
+        const userId = document.getElementById('chat-user-id').value.trim() || 'ops-user';
         appendMessage('user', message);
         chatInput.value = '';
         spinner.classList.remove('d-none');
@@ -264,6 +395,8 @@
 
         const payload = {
             message,
+            conversationId: currentConversationId,
+            userId,
             system:      document.getElementById('chat-system').value.trim() || null,
             environment: document.getElementById('chat-env').value || null
         };
@@ -275,7 +408,17 @@
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
-            appendMessage('assistant', res.ok ? data.answer : '⚠ ' + JSON.stringify(data));
+            if (res.ok) {
+                // Carry the server-confirmed conversationId for the next turn
+                if (data.conversationId) {
+                    currentConversationId = data.conversationId;
+                    updateConvDisplay();
+                }
+                appendMessage('assistant', data.answer);
+                window.dispatchEvent(new Event('chatResponseReceived'));
+            } else {
+                appendMessage('assistant', '⚠ ' + JSON.stringify(data));
+            }
         } catch (err) {
             appendMessage('assistant', '⚠ Network error: ' + err.message);
         } finally {
@@ -287,6 +430,191 @@
     document.getElementById('btn-send').addEventListener('click', sendMessage);
     chatInput.addEventListener('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    // ── Consolidate conversation to long-term memory ──────────────────────────
+    document.getElementById('btn-consolidate').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-consolidate');
+        const resultEl = document.getElementById('consolidate-result');
+        const userId = document.getElementById('chat-user-id').value.trim() || 'ops-user';
+
+        btn.disabled = true;
+        resultEl.classList.add('d-none');
+        try {
+            const res = await fetch(
+                `/api/ops/chat/${encodeURIComponent(currentConversationId)}/consolidate?userId=${encodeURIComponent(userId)}`,
+                { method: 'POST' }
+            );
+            resultEl.textContent = res.ok
+                ? '✓ Memories consolidated'
+                : `✗ HTTP ${res.status}`;
+            resultEl.className = 'small ' + (res.ok ? 'text-success' : 'text-danger');
+            resultEl.classList.remove('d-none');
+        } catch (err) {
+            resultEl.textContent = '✗ Network error: ' + err.message;
+            resultEl.className = 'small text-danger';
+            resultEl.classList.remove('d-none');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    // ── Load long-term memories ───────────────────────────────────────────────
+    document.getElementById('btn-load-memories').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-load-memories');
+        const listEl = document.getElementById('memories-list');
+        const countEl = document.getElementById('memories-count');
+        const memSpinner = document.getElementById('memories-spinner');
+        const userId = document.getElementById('chat-user-id').value.trim() || 'ops-user';
+
+        btn.disabled = true;
+        memSpinner.classList.remove('d-none');
+        listEl.innerHTML = '';
+        countEl.classList.add('d-none');
+
+        try {
+            const res = await fetch(`/api/ops/memories/${encodeURIComponent(userId)}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const memories = await res.json();
+
+            if (memories.length === 0) {
+                listEl.innerHTML = '<p class="text-muted small fst-italic">No memories found for this user.</p>';
+            } else {
+                listEl.innerHTML = '';
+                memories.forEach(m => {
+                    const item = document.createElement('div');
+                    item.className = 'memory-item';
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-primary me-1';
+                    badge.textContent = m.memoryType || 'FACT';
+                    const text = document.createTextNode(m.content || '');
+                    item.appendChild(badge);
+                    item.appendChild(text);
+                    listEl.appendChild(item);
+                });
+                countEl.textContent = `${memories.length} memory record(s)`;
+                countEl.classList.remove('d-none');
+            }
+        } catch (err) {
+            listEl.innerHTML = `<p class="text-danger small">✗ ${err.message}</p>`;
+        } finally {
+            btn.disabled = false;
+            memSpinner.classList.add('d-none');
+        }
+    });
+    // ── Workflow State panel ──────────────────────────────────────────────────
+    const workflowState = document.getElementById('workflow-state');
+    const workflowSpinner = document.getElementById('workflow-spinner');
+    const btnResume = document.getElementById('btn-resume');
+    const btnComplete = document.getElementById('btn-complete');
+    const workflowActionResult = document.getElementById('workflow-action-result');
+
+    function statusBadgeClass(status) {
+        return 'badge status-badge-' + (status || '');
+    }
+
+    function renderWorkflowState(cp) {
+        if (!cp) {
+            workflowState.innerHTML = '<p class="text-muted small fst-italic">No checkpoint found.</p>';
+            btnResume.classList.add('d-none');
+            btnComplete.classList.add('d-none');
+            return;
+        }
+        const rows = [
+            ['Status',    `<span class="badge ${statusBadgeClass(cp.status)}">${cp.status || '—'}</span>`],
+            ['Step',      cp.currentStep || '—'],
+            ['Workflow',  cp.workflowName || '—'],
+            ['Task ID',   `<span class="font-monospace" style="font-size:.7rem">${(cp.taskId || '—').substring(0,8)}…</span>`],
+            ['Updated',   cp.updatedAt ? new Date(cp.updatedAt).toLocaleTimeString() : '—'],
+            ['Expires',   cp.expiresAt ? new Date(cp.expiresAt).toLocaleDateString() : '—'],
+        ];
+        const toolRefs = (cp.toolExecutionRefs || []).length;
+        if (toolRefs > 0) rows.push(['Tool calls', toolRefs]);
+        const pending = (cp.pendingActions || []);
+        if (pending.length > 0) rows.push(['Pending', pending.join(', ')]);
+
+        workflowState.innerHTML = rows.map(([label, val]) =>
+            `<div class="state-row"><span class="state-label">${label}</span> ${val}</div>`
+        ).join('');
+
+        // Show Resume button when paused, Complete button when paused or running
+        const paused = cp.status === 'WAITING_APPROVAL' || cp.status === 'WAITING_INPUT';
+        const active = cp.status === 'RUNNING' || paused;
+        btnResume.classList.toggle('d-none', !paused);
+        btnComplete.classList.toggle('d-none', !active);
+    }
+
+    async function loadWorkflowState() {
+        workflowSpinner.classList.remove('d-none');
+        workflowActionResult.classList.add('d-none');
+        try {
+            const res = await fetch(`/api/ops/chat/${encodeURIComponent(currentConversationId)}/state`);
+            if (res.status === 404) {
+                renderWorkflowState(null);
+            } else if (res.ok) {
+                renderWorkflowState(await res.json());
+            } else {
+                workflowState.innerHTML = `<p class="text-danger small">✗ HTTP ${res.status}</p>`;
+            }
+        } catch (err) {
+            workflowState.innerHTML = `<p class="text-danger small">✗ ${err.message}</p>`;
+        } finally {
+            workflowSpinner.classList.add('d-none');
+        }
+    }
+
+    document.getElementById('btn-load-state').addEventListener('click', loadWorkflowState);
+
+    btnResume.addEventListener('click', async () => {
+        const userId = document.getElementById('chat-user-id').value.trim() || 'ops-user';
+        btnResume.disabled = true;
+        workflowActionResult.classList.add('d-none');
+        try {
+            const res = await fetch(
+                `/api/ops/chat/${encodeURIComponent(currentConversationId)}/resume?userId=${encodeURIComponent(userId)}`,
+                { method: 'POST' }
+            );
+            if (res.ok) {
+                const data = await res.json();
+                appendMessage('assistant', data.answer);
+                workflowActionResult.textContent = '✓ Workflow resumed';
+                workflowActionResult.className = 'small text-success';
+                workflowActionResult.classList.remove('d-none');
+                await loadWorkflowState();
+            } else {
+                workflowActionResult.textContent = `✗ HTTP ${res.status}`;
+                workflowActionResult.className = 'small text-danger';
+                workflowActionResult.classList.remove('d-none');
+            }
+        } catch (err) {
+            workflowActionResult.textContent = '✗ ' + err.message;
+            workflowActionResult.className = 'small text-danger';
+            workflowActionResult.classList.remove('d-none');
+        } finally {
+            btnResume.disabled = false;
+        }
+    });
+
+    btnComplete.addEventListener('click', async () => {
+        btnComplete.disabled = true;
+        workflowActionResult.classList.add('d-none');
+        try {
+            // There is no dedicated "complete" endpoint — consolidate covers the semantic need;
+            // we call the state endpoint with a synthetic PATCH-like approach by consolidating
+            // and refreshing. For the article demo we just refresh and inform the user.
+            workflowActionResult.textContent = '✓ Use Consolidate to save memories, then start a new session';
+            workflowActionResult.className = 'small text-success';
+            workflowActionResult.classList.remove('d-none');
+        } finally {
+            btnComplete.disabled = false;
+        }
+    });
+
+    // Auto-refresh workflow state after each chat send
+    const _origSendMessage = sendMessage;
+    // Monkey-patch sendMessage to trigger state refresh after a reply arrives
+    window.addEventListener('chatResponseReceived', () => {
+        loadWorkflowState();
     });
 </script>
 </body>

@@ -75,6 +75,12 @@
             <artifactId>spring-ai-starter-vector-store-mongodb-atlas</artifactId>
         </dependency>
 
+        <!-- Jackson: JSON parsing for LLM consolidation responses -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -8,6 +8,11 @@ spring:
       # e.g. mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
       uri: ${MONGODB_URI:mongodb://localhost:27017/ops_assistant}
       database: ${MONGODB_DATABASE:ops_assistant}
+      # Automatically create @Indexed indexes.
+      # Requires Atlas M10+ for programmatic TTL index creation on checkpoints.expiresAt.
+      # On Atlas M0 free tier: set auto-index-creation=false and create the TTL index manually
+      # in Atlas UI → Collections → checkpoints → Indexes: { expiresAt: 1 }, expireAfterSeconds=0.
+      auto-index-creation: false
 
   ai:
     openai:
@@ -41,6 +46,17 @@ spring:
           - severity
           - team
 
+ops-assistant:
+  memory:
+    # Name of the memories collection (long-term memory)
+    collection-name: memories
+    # Atlas Vector Search index name for memories — create manually in Atlas UI
+    index-name: memories_vector_index
+    # Top-K results for long-term memory recall
+    top-k: 5
+    # Minimum similarity threshold for memory recall
+    similarity-threshold: 0.6
+
 management:
   endpoints:
     web:
@@ -52,6 +68,9 @@ management:
 
 logging:
   level:
-    com.example.opsassistant: DEBUG
+    it.matteoroxis.opsassistant: DEBUG
     org.springframework.ai: INFO
     org.springframework.data.mongodb: WARN
+  pattern:
+    # Include MDC keys conversationId and userId in every log line when present
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [convId=%X{conversationId:-−} uid=%X{userId:-−}] - %msg%n"

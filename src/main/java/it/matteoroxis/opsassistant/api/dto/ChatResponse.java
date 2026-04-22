@@ -3,6 +3,7 @@ package it.matteoroxis.opsassistant.api.dto;
 /**
  * Response envelope for a single chat turn.
  *
- * @param answer the assistant's reply
+ * @param conversationId the conversation identifier (echoed back or newly generated)
+ * @param answer         the assistant's reply
  */
-public record ChatResponse(String answer) {}
+public record ChatResponse(String conversationId, String answer) {}
